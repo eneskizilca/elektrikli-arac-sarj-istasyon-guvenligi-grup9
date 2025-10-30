@@ -1,3 +1,3 @@
-# elektrikli-arac-sarj-istasyon-guvenligi-grup9
+# Elektrikli Araç Şarj İstasyon Güvenliği (Grup 9)
 
 BSG dersi kapsamında yürütecek olduğumuz projeye ait repodur.
