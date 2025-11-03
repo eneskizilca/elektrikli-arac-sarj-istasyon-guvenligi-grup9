@@ -1,0 +1,22 @@
+Senaryo Tanımı ve Amacı
+Bu anomali senaryosu, bir şarj istasyonu (CP - "Kol") ile onu yöneten merkezi sunucu (CSMS - "Beyin") arasındaki internet tabanlı (OCPP) iletişimin, üçüncü bir tarafça (saldırgan) gizlice dinlenmesi ve manipüle edilmesi esasına dayanır.
+
+Temel amaç, şarj işleminin kendisini değil, o işlemi başlatan veya durduran komutları hedef almaktır.
+
+Saldırı Akışı (Siber-Fiziksel Etki)
+Saldırı, saldırganın "Beyin" (CSMS) ile "Kol" (CP) arasındaki konuşmanın ortasına girmesiyle (Man-in-the-Middle) başlar. Bu, genellikle istasyonun (Kol) internete bağlanmak için halka açık, şifresiz bir Wi-Fi ağı gibi güvensiz bir kanal kullanmasıyla mümkün olur.
+
+Saldırgan araya girdiğinde, şu adımları izler:
+
+Komutu Yakalar: "Beyin" (CSMS), kullanıcıya hizmet vermek için "Kol"a (CP) RemoteStartTransaction (Şarjı Başlat) komutunu gönderir. Saldırgan bu komutu yolda yakalar.
+
+Komutu Değiştirir (Manipülasyon): Saldırgan, yakaladığı bu "Başlat" komutunun içeriğini anında RemoteStopTransaction (Şarjı Durdur) olarak değiştirir.
+
+Hedefi Kandırır: Değiştirilmiş bu "Durdur" komutu, "Kol"a (CP) sanki "Beyin"den geliyormuş gibi iletilir.
+
+"Köprü"yü Tetikler: "Kol" (CP), bu sahte komutu "doğru" kabul eder ve projemizin "köprü" konseptine uygun olarak, bu dijital komutu fiziksel bir eyleme dönüştürür: Şarj kablosu üzerinden aracın iç ağına (CAN-Bus) "Durdur" sinyalini gönderir.
+
+Tespit Edilecek Anomali (Tutarsızlık)
+Saldırının sonucu, hedeflenmiş bir Hizmet Reddi (DoS) saldırısıdır; kullanıcı şarj işlemini başlatamaz.
+
+Tespit edilmesi gereken asıl anomali, sistem kayıtlarındaki bariz siber-fiziksel tutarsızlıktır: "Beyin"in (CSMS) kayıtlarında "Ben 10:30'da Başlat komutu gönderdim" yazarken, "Kol"un (CP) ve "Arac"ın (CAN) kayıtlarında "Bize 10:30'da Durdur komutu geldi" yazacaktır. Bu mantıksal çelişki, saldırının kanıtıdır.
