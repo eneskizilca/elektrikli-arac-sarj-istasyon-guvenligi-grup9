@@ -1,67 +1,108 @@
 import asyncio
 import logging
-import can
-import websockets
-from datetime import datetime, timezone
+import random
+import json
+from datetime import datetime
+from websockets import connect
 
-from ocpp.v16 import ChargePoint as cp, call, call_result
-from ocpp.v16.enums import RegistrationStatus, RemoteStartStopStatus
-from ocpp.routing import on
+logging.basicConfig(level=logging.INFO)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [İSTEMCİ] - %(message)s')
 
-# --- DONANIM (vcan0) AYARI ---
-try:
-    can_bus = can.interface.Bus(channel='vcan0', interface='socketcan')
-    logging.info("Donanım (vcan0) bağlantısı BAŞARILI.")
-except Exception:
-    # Hata vermemesi için pass geçiyoruz, donanım yoksa simülasyon devam eder
-    can_bus = None
+# =========================
+#  ANOMALİ AYARLARI
+# =========================
+ANOMALY_ENABLED = True                # Anomali açık/kapalı
+NORMAL_INTERVAL = 1                   # Normal örnekleme: 1 saniye
+MANIPULATED_INTERVAL = 10             # Anomalide: 10 saniye
+JITTER_MAX = 2                        # Ek rastgele gecikme (±2 sn)
+CRITICAL_EVENT_DURATION = 5           # Kritik olay süresi (ama gönderilmeyecek)
+CRITICAL_EVENT_PROB = 0.15            # %15 ihtimal kritik olay oluşur (gizlenecek)
 
-def donanima_komut_yolla(can_id, data):
-    if can_bus:
-        try:
-            msg = can.Message(arbitration_id=can_id, data=data, is_extended_id=False)
-            can_bus.send(msg)
-            logging.info(f"Donanıma İletildi -> ID: {hex(can_id)} Data: {data}")
-        except Exception as e:
-            logging.error(f"Donanım Hatası: {e}")
 
-class SablonChargePoint(cp):
+# =========================
+#  TELEMETRİ ÜRETİCİ
+# =========================
+def generate_normal_telemetry():
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "voltage": round(random.uniform(220, 230), 2),
+        "current": round(random.uniform(10, 32), 2),
+        "power": round(random.uniform(2, 7), 2),
+        "status": "Normal"
+    }
 
-    async def send_meter_values(self):
-        """ Düzenli enerji raporu gönderir (NORMAL DAVRANIŞ) """
-        sayac = 0
-        while True:
-            sayac += 10 # Normal artış
-            payload = [{
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "sampled_value": [{"value": str(sayac), "unit": "Wh"}]
-            }]
-            # Göndermek için alttaki satırı aktif edebilirsiniz
-            # await self.call(call.MeterValues(connector_id=1, meter_value=payload))
-            await asyncio.sleep(5)
 
-    @on('RemoteStartTransaction')
-    async def on_remote_start(self, id_tag, **kwargs):
-        logging.info(f"KOMUT ALINDI: Şarj Başlat (Kart: {id_tag})")
-        donanima_komut_yolla(0x200, [0x01, 0x01]) # Röleyi aç
-        return call_result.RemoteStartTransaction(status=RemoteStartStopStatus.accepted)
+def generate_critical_event():
+    # Bu olay oluşacak ama anomalide GÖNDERİLMEYECEK
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "voltage": round(random.uniform(260, 310), 2),   # tehlikeli sıçrama
+        "current": round(random.uniform(40, 60), 2),
+        "power": round(random.uniform(15, 25), 2),
+        "status": "CRITICAL_SPIKE"
+    }
 
-    @on('RemoteStopTransaction')
-    async def on_remote_stop(self, transaction_id, **kwargs):
-        logging.info(f"KOMUT ALINDI: Şarj Durdur (TxID: {transaction_id})")
-        donanima_komut_yolla(0x201, [0x00, 0x00]) # Röleyi kapat
-        return call_result.RemoteStopTransaction(status=RemoteStartStopStatus.accepted)
 
+# =========================
+#  TELEMETRİ GÖNDERİCİ
+# =========================
+async def telemetry_loop(ws):
+    logging.info("Telemetry loop started.")
+
+    critical_event_active = False
+    critical_event_end_time = None
+
+    while True:
+
+        # --------------------------
+        # Kritik olay üretme (client içinde)
+        # --------------------------
+        if random.random() < CRITICAL_EVENT_PROB and not critical_event_active:
+            critical_event_active = True
+            critical_event_end_time = datetime.utcnow().timestamp() + CRITICAL_EVENT_DURATION
+
+        # Kritik olay devam ediyorsa ama GÖNDERİLMEYECEK
+        if critical_event_active:
+            critical_data = generate_critical_event()
+            logging.warning(f"[GİZLENEN OLAY] Kritik olay oluştu ancak sunucuya gönderilmiyor: {critical_data}")
+
+            if datetime.utcnow().timestamp() >= critical_event_end_time:
+                critical_event_active = False
+
+            # Sunucuya hiçbir şey gönderme → olay gizlenmiş olur
+            await asyncio.sleep(0.5)
+            continue
+
+        # --------------------------
+        # Normal telemetri gönderme
+        # --------------------------
+        data = generate_normal_telemetry()
+
+        await ws.send(json.dumps(data))
+        logging.info(f"Telemetri gönderildi: {data}")
+
+        # --------------------------
+        # Adaptive Sampling Manipülasyonu
+        # --------------------------
+        if ANOMALY_ENABLED:
+            interval = MANIPULATED_INTERVAL + random.uniform(0, JITTER_MAX)
+        else:
+            interval = NORMAL_INTERVAL
+
+        await asyncio.sleep(interval)
+
+
+# =========================
+#  OCPP BAĞLANTISI
+# =========================
 async def main():
-    async with websockets.connect('ws://localhost:9000/CHARGER-001', subprotocols=['ocpp1.6']) as ws:
+    uri = "ws://localhost:9000"   # Sunucu adresi (şablondaki gibi bırak)
+    async with connect(uri) as ws:
         logging.info("Sunucuya bağlanıldı.")
-        client = SablonChargePoint('CHARGER-001', ws)
-        await asyncio.gather(client.start(), client.send_boot_notification())
 
-if __name__ == '__main__':
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        if can_bus: can_bus.shutdown()
+        # Telemetri döngüsünü başlat
+        await telemetry_loop(ws)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
