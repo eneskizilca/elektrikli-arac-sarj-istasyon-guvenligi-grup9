@@ -32,6 +32,8 @@ Bu köprü üzerindeki zafiyetleri (Man-in-the-Middle, Firmware Manipülasyonu v
 
 [Proje Tanıtım Websitemiz (Github.io ile)](https://eneskizilca.github.io/secvolt.github.io/)
 
+[Site token kaynaklı bir sorundan dolayı açılmazsa görünümü bu şekildedir.](https://drive.google.com/file/d/1YgbkVNmKmB1VbxhZrTGyizk7E2zzRnNT/view?usp=sharing)
+
 ---
 
 ## 👥 Ekip
