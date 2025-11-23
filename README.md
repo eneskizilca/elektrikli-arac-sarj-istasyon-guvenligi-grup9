@@ -34,6 +34,21 @@ Bu köprü üzerindeki zafiyetleri (Man-in-the-Middle, Firmware Manipülasyonu v
 
 ---
 
+## 👥 Ekip
+
+235541116: Enes Kızılca (PY)  
+235541007: Yusuf Arıkan  
+235541020: Kevser Aslan  
+235541034: Abdulmecit Öztürk  
+235541049: Hüseyin Üzüm  
+235541067: Abdullah Can Tekin  
+235541090: Samet Altuner  
+235542009: Umut Mihyaz  
+245541017: Mustafa Önler  
+225541013: Hüseyin Korkutan  
+
+---
+
 ## 📂 Depo Yapısı ve İçerik
 
 Bu depo, 10 kişilik proje ekibimizin geliştirdiği farklı modülleri ve senaryoları bir araya getirir:
