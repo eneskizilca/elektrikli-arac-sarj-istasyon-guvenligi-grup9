@@ -27,6 +27,31 @@ class SablonChargePoint(cp):
             current_time=datetime.now(timezone.utc).isoformat()
         )
 
+    # --- ANOMALİ İÇİN EKLENEN KISIM BAŞLANGIÇ ---
+    @on('Authorize')
+    async def on_authorize(self, id_tag, **kwargs):
+        logging.info(f"YETKİLENDİRME İSTEĞİ GELDİ: Kart ID = {id_tag}")
+
+        # ZAFİYET SİMÜLASYONU:
+        # Eğer gelen ID, bizim SQL Injection payload'umuzu içeriyorsa, 
+        # sunucu veritabanı kandırılmış gibi davranıp KABUL EDECEK.
+        
+        if "' OR '1'='1'" in id_tag:
+            logging.warning(f"⚠️  KRİTİK GÜVENLİK UYARISI: SQL Injection Payload'u Tespit Edildi! -> {id_tag}")
+            logging.warning("-> SİSTEM ZAFİYETİ TETİKLENDİ: Veritabanı manipüle edildi, Admin girişi ONAYLANDI.")
+            
+            # Normalde reddetmesi gerekirken, zafiyet yüzünden kabul ediyor:
+            return call_result.Authorize(
+                id_tag_info={'status': RegistrationStatus.accepted}
+            )
+        else:
+            # Normal (saldırı olmayan) geçersiz kartlar reddedilir
+            logging.info("Bilinmeyen kart, reddediliyor.")
+            return call_result.Authorize(
+                id_tag_info={'status': RegistrationStatus.invalid}
+            )
+    # --- ANOMALİ İÇİN EKLENEN KISIM BİTİŞ ---
+
     @on('MeterValues')
     async def on_meter_values(self, connector_id, meter_value, **kwargs):
         try:
@@ -55,3 +80,4 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         pass
+     
