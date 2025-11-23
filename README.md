@@ -27,12 +27,20 @@ Bu köprü üzerindeki zafiyetleri (Man-in-the-Middle, Firmware Manipülasyonu v
 
 ---
 
-## 📄 **Detaylı İnceleme:**
-[Proje Gelişim Fazları ve Detaylı Gelişim Dokümanı - Toplantılarımız](https://docs.google.com/document/d/1XRKAa9kGEwEvim2WuKtIdeapeiyGzDRf_tdyihQIFXw/edit?usp=sharing)
+## 📄 Detaylı İnceleme:</strong>
 
-[Proje Tanıtım Websitemiz (Github.io ile)](https://eneskizilca.github.io/secvolt.github.io/)
+<a href="https://docs.google.com/document/d/1XRKAa9kGEwEvim2WuKtIdeapeiyGzDRf_tdyihQIFXw/edit?usp=sharing" target="_blank">
+  Proje Gelişim Fazları ve Detaylı Gelişim Dokümanı - Toplantılarımız
+</a><br>
 
-[Site token kaynaklı bir sorundan dolayı açılmazsa görünümü bu şekildedir.](https://drive.google.com/file/d/1YgbkVNmKmB1VbxhZrTGyizk7E2zzRnNT/view?usp=sharing)
+<a href="https://eneskizilca.github.io/secvolt.github.io/" target="_blank">
+  Proje Tanıtım Websitemiz (Github.io ile)
+</a><br>
+
+<a href="https://drive.google.com/file/d/1YgbkVNmKmB1VbxhZrTGyizk7E2zzRnNT/view?usp=sharing" target="_blank">
+  Site token kaynaklı bir sorundan dolayı açılmazsa görünümü bu şekildedir.
+</a>
+
 
 ---
 
