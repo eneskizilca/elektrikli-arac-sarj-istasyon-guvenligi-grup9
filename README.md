@@ -2,6 +2,10 @@
 
 BSG dersi kapsamında yürüttüğümüz projeye ait repodur.
 
+<p align="center">
+  <img width="123" height="123" src="https://github.com/user-attachments/assets/8d1d4847-de45-4b7a-9277-758020bf8200" />
+</p>
+
 # ⚡ SecVolt: EV Şarj İstasyonu Güvenlik ve Anomali Tespit Sistemi
 
 [![Project Status](https://img.shields.io/badge/Status-Development-orange)]()
@@ -25,6 +29,8 @@ Bu köprü üzerindeki zafiyetleri (Man-in-the-Middle, Firmware Manipülasyonu v
 
 ## 📄 **Detaylı İnceleme:**
 [Proje gelişim fazları ve detaylı gelişim dokümantasyonu](https://docs.google.com/document/d/1XRKAa9kGEwEvim2WuKtIdeapeiyGzDRf_tdyihQIFXw/edit?usp=sharing)
+
+[Proje Tanıtım Websitemiz](https://eneskizilca.github.io/secvolt.github.io/)
 
 ---
 
