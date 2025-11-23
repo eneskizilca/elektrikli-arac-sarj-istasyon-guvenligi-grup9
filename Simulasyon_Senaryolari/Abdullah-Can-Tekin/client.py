@@ -1,3 +1,5 @@
+# Abdullah Can Tekin - SQL Injection Anomali Senaryosu
+# Bu kod, sunucuya 'Authorize' isteği ile SQL payload'u göndererek zafiyet testi yapar.
 import asyncio
 import logging
 import can
