@@ -93,7 +93,7 @@ class SablonChargePoint(cp):
         donanima_komut_yolla(0x200, [0x01, 0x01])
         return call_result.RemoteStartTransaction(status=RemoteStartStopStatus.accepted)
 
-    @on('RemoteStopTransaction')
+    @on('RemoteStopTransaction') 
     async def on_remote_stop(self, transaction_id, **kwargs):
         logging.info(f"KOMUT ALINDI: Şarj Durdur (TxID: {transaction_id})")
         donanima_komut_yolla(0x201, [0x00, 0x00])
