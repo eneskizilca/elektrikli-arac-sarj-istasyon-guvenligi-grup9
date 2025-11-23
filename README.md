@@ -23,6 +23,11 @@ Bu köprü üzerindeki zafiyetleri (Man-in-the-Middle, Firmware Manipülasyonu v
 
 ---
 
+## 📄 **Detaylı İnceleme:**
+[Proje gelişim fazları ve detaylı gelişim dokümantasyonu](https://docs.google.com/document/d/1XRKAa9kGEwEvim2WuKtIdeapeiyGzDRf_tdyihQIFXw/edit?usp=sharing)
+
+---
+
 ## 📂 Depo Yapısı ve İçerik
 
 Bu depo, 10 kişilik proje ekibimizin geliştirdiği farklı modülleri ve senaryoları bir araya getirir:
